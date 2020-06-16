@@ -34,11 +34,13 @@
  */
 
 package java.util.concurrent.locks;
-import java.util.concurrent.TimeUnit;
+
+import sun.misc.Unsafe;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import sun.misc.Unsafe;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Provides a framework for implementing blocking locks and related
@@ -377,6 +379,7 @@ public abstract class AbstractQueuedSynchronizer
      * expert group, for helpful ideas, discussions, and critiques
      * on the design of this class.
      */
+    // 这个node是aqs基本的结点
     static final class Node {
         /** Marker to indicate a node is waiting in shared mode */
         static final Node SHARED = new Node();
@@ -519,17 +522,25 @@ public abstract class AbstractQueuedSynchronizer
      * If head exists, its waitStatus is guaranteed not to be
      * CANCELLED.
      */
+
+    /**
+     * -----------------------------------------------------------------------------
+     * 先规定一点,node所在的队列是采用双向链表实现的,有头指针,尾指针,头结点,每个结点又有前指针,后指针.先把术语固定好
+     */
+    // 这是头指针
     private transient volatile Node head;
 
     /**
      * Tail of the wait queue, lazily initialized.  Modified only via
      * method enq to add new wait node.
      */
+    // 这是尾指针
     private transient volatile Node tail;
 
     /**
      * The synchronization state.
      */
+    // 这是标志是否有结点抢占到锁的标志 0为没有结点,1为有结点
     private volatile int state;
 
     /**
@@ -580,13 +591,17 @@ public abstract class AbstractQueuedSynchronizer
      * @param node the node to insert
      * @return node's predecessor
      */
+    // 这是结点入队的方法
     private Node enq(final Node node) {
         for (;;) {
-            Node t = tail;
-            if (t == null) { // Must initialize
+            Node t = tail; // 如果是第一个结点进来,这个尾指针还是指向null
+            if (t == null) { // Must initialize 这里对head和tail进行初始化,这个相当于链表当中的头结点,不存任何信息
+                // 如果尾指针没有指向,则创建一个结点让头指针指向,并且尾指针也指向
                 if (compareAndSetHead(new Node()))
                     tail = head;
             } else {
+                // 然后第二次进来,它就不是为空了,然后就把刚刚生成的插入到队列当中
+                // 这个结点的头结点指向尾指针所指的结点,然后尾指针指向这个结点,t指向的结点(是尾指针原来指向的)的后指针指向这个结点(尾插法)
                 node.prev = t;
                 if (compareAndSetTail(t, node)) {
                     t.next = node;
@@ -602,17 +617,22 @@ public abstract class AbstractQueuedSynchronizer
      * @param mode Node.EXCLUSIVE for exclusive, Node.SHARED for shared
      * @return the new node
      */
+    // 这里没有去抢占的流程,只是加入等候队列的流程
     private Node addWaiter(Node mode) {
+        // 把当前线程初始化成一个node
         Node node = new Node(Thread.currentThread(), mode);
         // Try the fast path of enq; backup to full enq on failure
+        //这个结点的前指针指向队列的尾结点(注意此时尾结点为空)
         Node pred = tail;
+        // 如果前指针他不等于null,说明尾结点原来是有指向的(走下面的流程)
         if (pred != null) {
-            node.prev = pred;
-            if (compareAndSetTail(pred, node)) {
-                pred.next = node;
-                return node;
+            node.prev = pred; // 则这个线程node的前指针指向队列尾指针(这里用到的是尾插法)
+            if (compareAndSetTail(pred, node)) { // cas如果tail依然是tail,则把node变成tail
+                pred.next = node; // 换成功以后,再把原来的尾节点的next指针指向node
+                return node; // 这里返回node
             }
         }
+        // 如果前指针是空的, 则说明尾结点是空的, 则把node初始化然后放入队列当中
         enq(node);
         return node;
     }
@@ -641,8 +661,10 @@ public abstract class AbstractQueuedSynchronizer
          * to clear in anticipation of signalling.  It is OK if this
          * fails or if status is changed by waiting thread.
          */
+        // ws现在是-1
         int ws = node.waitStatus;
         if (ws < 0)
+            // status重新设置成0
             compareAndSetWaitStatus(node, ws, 0);
 
         /*
@@ -659,6 +681,7 @@ public abstract class AbstractQueuedSynchronizer
                     s = t;
         }
         if (s != null)
+            // 结点已经unpark了
             LockSupport.unpark(s.thread);
     }
 
@@ -855,17 +878,23 @@ public abstract class AbstractQueuedSynchronizer
      * @return {@code true} if interrupted while waiting
      */
     final boolean acquireQueued(final Node node, int arg) {
+        // 如果failed为true则取消线程任务
         boolean failed = true;
         try {
             boolean interrupted = false;
+            // 这里进行自旋, 一直去抢
             for (;;) {
                 final Node p = node.predecessor();
+                // 这里进行再抢一次,只有抢到才会跳出这个循环
                 if (p == head && tryAcquire(arg)) {
+                    // 如果抢到则把下一个结点变成哨兵结点,原来的哨兵结点就标记为null,让gc回收掉
+                    // 这里的逻辑是因为抢到的这个结点已经正在执行线程任务了,所以直接把原来头结点出队然后标记null方便gc回收,然后把刚刚出队的结点变成头结点
                     setHead(node);
                     p.next = null; // help GC
                     failed = false;
                     return interrupted;
                 }
+                // 这里进行park等待
                 if (shouldParkAfterFailedAcquire(p, node) &&
                     parkAndCheckInterrupt())
                     interrupted = true;
@@ -1072,6 +1101,7 @@ public abstract class AbstractQueuedSynchronizer
      *         correctly.
      * @throws UnsupportedOperationException if exclusive mode is not supported
      */
+    // 这里使用的模板模式, 这里不实现这个方法需要子类实现,并且只能子类去实现
     protected boolean tryAcquire(int arg) {
         throw new UnsupportedOperationException();
     }
@@ -1194,9 +1224,11 @@ public abstract class AbstractQueuedSynchronizer
      *        {@link #tryAcquire} but is otherwise uninterpreted and
      *        can represent anything you like.
      */
+    // 此时arg的入参是1
     public final void acquire(int arg) {
-        if (!tryAcquire(arg) &&
-            acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
+        // 这里进行不断地自旋
+        if (!tryAcquire(arg) && // 第一个条件是再次去获得锁是否成功, 这个方法失败才会去执行下一个方法,短路原则
+            acquireQueued(addWaiter(Node.EXCLUSIVE), arg)) //addWaiter是把现在的结点添加到双向链表中 acquireQueued方法是
             selfInterrupt();
     }
 
@@ -1259,6 +1291,7 @@ public abstract class AbstractQueuedSynchronizer
      */
     public final boolean release(int arg) {
         if (tryRelease(arg)) {
+            // 让h指针指向头结点
             Node h = head;
             if (h != null && h.waitStatus != 0)
                 unparkSuccessor(h);
