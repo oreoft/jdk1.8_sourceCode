@@ -142,11 +142,11 @@ public class ReentrantLock implements Lock, java.io.Serializable {
                     return true; // 这里返回true在调用方就是false,跳出循环执行自己业务代码
                 }
             } else if (current == getExclusiveOwnerThread()) { // 如果是有锁状态,再看看是不是重入锁,如果不是重入锁则直接返回false
-                int nextc = c + acquires;
+                int nextc = c + acquires; //
                 // 执行完上面代码后，nextc=2
                 if (nextc < 0) // overflow
                     throw new Error("Maximum lock count exceeded");
-                // 将AQS下的state设置为2
+                // 将AQS下的state设置为2 表示它已经有两个锁了,如果只有一个unlock则会继续锁住
                 setState(nextc);
                 return true;
             }
