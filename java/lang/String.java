@@ -28,13 +28,7 @@ package java.lang;
 import java.io.ObjectStreamField;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Formatter;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -2937,6 +2931,7 @@ public final class String
      * @since  1.5
      */
     public static String format(String format, Object... args) {
+        // 内部调用创建Formatter对象调用format
         return new Formatter().format(format, args).toString();
     }
 

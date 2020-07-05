@@ -40,29 +40,16 @@
 
 package java.util;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamField;
-import java.io.Serializable;
-import java.security.AccessController;
-import java.text.MessageFormat;
-import java.util.spi.LocaleNameProvider;
-
 import sun.security.action.GetPropertyAction;
-import sun.util.locale.BaseLocale;
-import sun.util.locale.InternalLocaleBuilder;
-import sun.util.locale.LanguageTag;
-import sun.util.locale.LocaleExtensions;
-import sun.util.locale.LocaleMatcher;
-import sun.util.locale.LocaleObjectCache;
-import sun.util.locale.LocaleSyntaxException;
-import sun.util.locale.LocaleUtils;
-import sun.util.locale.ParseStatus;
+import sun.util.locale.*;
 import sun.util.locale.provider.LocaleProviderAdapter;
 import sun.util.locale.provider.LocaleResources;
 import sun.util.locale.provider.LocaleServiceProviderPool;
-import sun.util.locale.provider.ResourceBundleBasedAdapter;
+
+import java.io.*;
+import java.security.AccessController;
+import java.text.MessageFormat;
+import java.util.spi.LocaleNameProvider;
 
 /**
  * A <code>Locale</code> object represents a specific geographical, political,
@@ -833,6 +820,7 @@ public final class Locale implements Cloneable, Serializable {
      */
     public static Locale getDefault(Locale.Category category) {
         // do not synchronize this method - see 4071298
+        // 这里通过传入的不同枚举走不同的逻辑, 看样子initDefault使用的策略模式
         switch (category) {
         case DISPLAY:
             if (defaultDisplayLocale == null) {

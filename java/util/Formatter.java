@@ -25,17 +25,10 @@
 
 package java.util;
 
-import java.io.BufferedWriter;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
-import java.io.Flushable;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
+import sun.misc.DoubleConsts;
+import sun.misc.FormattedFloatingDecimal;
+
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
@@ -47,9 +40,6 @@ import java.text.DateFormatSymbols;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -57,9 +47,8 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
-
-import sun.misc.DoubleConsts;
-import sun.misc.FormattedFloatingDecimal;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * An interpreter for printf-style format strings.  This class provides support
@@ -2452,6 +2441,7 @@ public final class Formatter implements Closeable, Flushable {
      * @return  This formatter
      */
     public Formatter format(String format, Object ... args) {
+        // 这个l就是刚开始的Locale
         return format(l, format, args);
     }
 
