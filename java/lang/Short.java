@@ -206,6 +206,7 @@ public final class Short extends Number implements Comparable<Short> {
         static final Short cache[] = new Short[-(-128) + 127 + 1];
 
         static {
+            // Short也有缓冲池
             for(int i = 0; i < cache.length; i++)
                 cache[i] = new Short((short)(i - 128));
         }

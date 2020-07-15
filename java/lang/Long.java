@@ -26,7 +26,7 @@
 package java.lang;
 
 import java.lang.annotation.Native;
-import java.math.*;
+import java.math.BigInteger;
 
 
 /**
@@ -808,6 +808,7 @@ public final class Long extends Number implements Comparable<Long> {
 
         static final Long cache[] = new Long[-(-128) + 127 + 1];
 
+        // Long这里有一个静态代码块 初始化long的cache池,初始化到-128到127
         static {
             for(int i = 0; i < cache.length; i++)
                 cache[i] = new Long(i - 128);
@@ -833,6 +834,7 @@ public final class Long extends Number implements Comparable<Long> {
      * @since  1.5
      */
     public static Long valueOf(long l) {
+        // 这个偏移量是为了抵消负数的,直接拿到对应的下标
         final int offset = 128;
         if (l >= -128 && l <= 127) { // will cache
             return LongCache.cache[(int)l + offset];

@@ -784,6 +784,7 @@ public final class Integer extends Number implements Comparable<Integer> {
 
         static {
             // high value may be configured by property
+            // 启动的时候更新初始化这个integer的缓冲池
             int h = 127;
             String integerCacheHighPropValue =
                 sun.misc.VM.getSavedProperty("java.lang.Integer.IntegerCache.high");
@@ -827,7 +828,9 @@ public final class Integer extends Number implements Comparable<Integer> {
      * @since  1.5
      */
     public static Integer valueOf(int i) {
+        // 这里维护了缓冲池,最低-128,最高127.这里直接从Integer的数组取出来,不再创建对象了
         if (i >= IntegerCache.low && i <= IntegerCache.high)
+            // 因为前128索引对应的元素都是负数, 所以直接负负得正加上去然后取出来
             return IntegerCache.cache[i + (-IntegerCache.low)];
         return new Integer(i);
     }
