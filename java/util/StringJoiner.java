@@ -182,6 +182,15 @@ public final class StringJoiner {
      * @return a reference to this {@code StringJoiner}
      */
     public StringJoiner add(CharSequence newElement) {
+        /**
+         *  每次元素进来都会调用一下prepareBuilder()
+         *  这个方法每次会在后面加一个delimiter
+         *  他维护一个全局变量value, 如果第一次进来是空,则拼接prefix(为空串).
+         *  后面每次进来都会要加一个这个方法每次会在后面加一个delimiter,
+         *  然后返回这个全局的value,这个value再被add一个新的拼接元素
+         *
+         *  因为它是每次之前拼接,并且第一次拼接的时候value是null,则拼接一个""所以不用考虑尾巴
+         */
         prepareBuilder().append(newElement);
         return this;
     }

@@ -2423,6 +2423,7 @@ public final class String
      *
      * <blockquote>For example,
      * <pre>{@code
+     * // 这相当于拼接的一种方式, 第一个参数是连接符, 后面都是需要拼接的元素, 这个地方还可以传一个list
      *     String message = String.join("-", "Java", "is", "cool");
      *     // message returned is: "Java-is-cool"
      * }</pre></blockquote>
@@ -2445,8 +2446,10 @@ public final class String
         Objects.requireNonNull(delimiter);
         Objects.requireNonNull(elements);
         // Number of elements not likely worth Arrays.stream overhead.
+        // 初始化拼接对象, 这里面刚开始都是"", 里面delimiter属性是传进去的
         StringJoiner joiner = new StringJoiner(delimiter);
         for (CharSequence cs: elements) {
+            // 其实刚开始就是一个StringBuilder,然后把第一个元素放进去
             joiner.add(cs);
         }
         return joiner.toString();
