@@ -24,7 +24,13 @@
  */
 
 package java.util;
-import java.io.*;
+
+import sun.misc.Unsafe;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamField;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.DoubleConsumer;
 import java.util.function.IntConsumer;
@@ -33,8 +39,6 @@ import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 import java.util.stream.StreamSupport;
-
-import sun.misc.Unsafe;
 
 /**
  * An instance of this class is used to generate a stream of
@@ -173,6 +177,7 @@ class Random implements java.io.Serializable {
     /**
      * Generates the next pseudorandom number. Subclasses should
      * override this, as this is used by all other methods.
+     * 这个可以生成一个伪随机数, 子类都应该去重写他, 因为这个被所有的其他方法所用到
      *
      * <p>The general contract of {@code next} is that it returns an
      * {@code int} value and if the argument {@code bits} is between
@@ -198,6 +203,10 @@ class Random implements java.io.Serializable {
     protected int next(int bits) {
         long oldseed, nextseed;
         AtomicLong seed = this.seed;
+        // 这里使用的cas,保证他的线程安全, 所以他是线程安全的
+        /*
+            在大量线程竞争的场景下，这个CAS操作很可能失败，失败了就会重试，而这个重试又会消耗CPU运算，从而使得性能大大下降了。
+         */
         do {
             oldseed = seed.get();
             nextseed = (oldseed * multiplier + addend) & mask;
